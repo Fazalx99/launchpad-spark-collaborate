@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -39,6 +38,18 @@ export default function Dashboard() {
           .order("created_at", { ascending: false });
           
         if (projectsError) throw projectsError;
+        
+        // Fetch ALL projects for the "Explore" tab (new)
+        const { data: allProjects, error: allProjectsError } = await supabase
+          .from("projects")
+          .select(`
+            *,
+            roles(count)
+          `)
+          .order("created_at", { ascending: false });
+          
+        if (allProjectsError) throw allProjectsError;
+        console.log("All projects:", allProjects); // Debug log
         
         // Fetch projects user has applied to
         const { data: applications, error: applicationsError } = await supabase
@@ -148,6 +159,7 @@ export default function Dashboard() {
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="myProjects">My Projects</TabsTrigger>
               <TabsTrigger value="applications">Applications</TabsTrigger>
+              <TabsTrigger value="explore">Explore</TabsTrigger> {/* New tab for exploring all projects */}
             </TabsList>
             
             <TabsContent value="overview" className="space-y-8 animate-fade-in">
@@ -296,6 +308,31 @@ export default function Dashboard() {
                     <Button asChild>
                       <Link to="/explore">
                         Explore Projects
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="explore" className="space-y-6 animate-fade-in">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Explore Projects</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* We'll use a new query to fetch all projects, not just the user's */}
+                {myProjects.length > 0 ? (
+                  myProjects.map((project) => (
+                    <ProjectCard key={project.id} project={project} />
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-16">
+                    <h3 className="text-lg font-medium mb-2">No projects found</h3>
+                    <p className="text-gray-500 mb-4">Be the first to create a project!</p>
+                    <Button asChild>
+                      <Link to="/projects/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        New Project
                       </Link>
                     </Button>
                   </div>

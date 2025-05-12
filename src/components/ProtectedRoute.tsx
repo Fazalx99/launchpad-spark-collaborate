@@ -6,6 +6,9 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
+  // Debug output to check authentication status
+  console.log("Auth state:", { isLoading, userExists: !!user });
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
