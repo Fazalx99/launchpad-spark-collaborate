@@ -2,117 +2,88 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import UserMenu from "@/components/UserMenu";
 import { Menu, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 
-export default function Navbar() {
+const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Explore Projects", href: "/explore" },
-    { name: "About", href: "#about" },
-  ];
-
+  
   return (
-    <nav className="sticky top-0 z-50 w-full glassmorphism py-4">
-      <div className="container mx-auto px-4 flex justify-between items-center">
-        <Link to="/" className="flex items-center space-x-2">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 w-8 h-8 rounded-md flex items-center justify-center">
-            <span className="text-white font-bold">S</span>
-          </div>
-          <span className="text-xl font-bold">StartBridge</span>
-        </Link>
-        
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center">
-          <div className="flex space-x-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.href}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  link.href.startsWith("#") 
-                    ? "cursor-pointer"
-                    : ""
-                )}
-                onClick={(e) => {
-                  if (link.href.startsWith("#")) {
-                    e.preventDefault();
-                    const element = document.querySelector(link.href);
-                    if (element) {
-                      element.scrollIntoView({
-                        behavior: "smooth",
-                      });
-                    }
-                  }
-                }}
-              >
-                {link.name}
+    <header className="border-b bg-white">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center">
+            <Link to="/" className="text-xl font-bold">StartBridge</Link>
+            
+            {/* Desktop Navigation */}
+            <nav className="hidden ml-10 space-x-8 md:flex">
+              <Link to="/" className="text-gray-600 hover:text-gray-900 hover:underline underline-offset-4">
+                Home
               </Link>
-            ))}
+              <Link to="/dashboard" className="text-gray-600 hover:text-gray-900 hover:underline underline-offset-4">
+                Dashboard
+              </Link>
+              <Link to="/explore" className="text-gray-600 hover:text-gray-900 hover:underline underline-offset-4">
+                Explore
+              </Link>
+            </nav>
           </div>
-          <div className="flex items-center ml-6 space-x-3">
-            <Button variant="outline" size="sm">
-              Sign In
+          
+          {/* User Menu - Desktop */}
+          <div className="hidden md:flex items-center space-x-4">
+            <UserMenu />
+          </div>
+          
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </Button>
-            <Button size="sm">Sign Up</Button>
           </div>
-        </div>
-        
-        {/* Mobile Menu Button */}
-        <div className="md:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle Menu"
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </Button>
         </div>
       </div>
       
-      {/* Mobile Menu */}
+      {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="md:hidden animate-fade-in">
-          <div className="px-4 py-5 bg-background border-t">
-            <div className="flex flex-col space-y-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.href}
-                  className="text-sm font-medium py-2 transition-colors hover:text-primary"
-                  onClick={(e) => {
-                    if (link.href.startsWith("#")) {
-                      e.preventDefault();
-                      setIsMenuOpen(false);
-                      const element = document.querySelector(link.href);
-                      if (element) {
-                        element.scrollIntoView({
-                          behavior: "smooth",
-                        });
-                      }
-                    } else {
-                      setIsMenuOpen(false);
-                    }
-                  }}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <div className="flex flex-col pt-2 space-y-3">
-                <Button variant="outline" size="sm">
-                  Sign In
-                </Button>
-                <Button size="sm">Sign Up</Button>
-              </div>
+        <div className="md:hidden px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
+          <Link
+            to="/"
+            className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Home
+          </Link>
+          <Link
+            to="/dashboard"
+            className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Dashboard
+          </Link>
+          <Link
+            to="/explore"
+            className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Explore
+          </Link>
+          <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="px-3">
+              <UserMenu />
             </div>
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
-}
+};
+
+export default Navbar;

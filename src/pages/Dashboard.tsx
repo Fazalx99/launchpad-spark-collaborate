@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -7,64 +7,98 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, Users, Clock, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import ProjectCard, { ProjectCardProps } from "@/components/ProjectCard";
-
-// Sample data for demonstration
-const myProjects = [
-  {
-    id: "1",
-    title: "EcoTrack",
-    description: "A mobile app that helps users track and reduce their carbon footprint through daily activities and challenges.",
-    category: "Mobile App",
-    openRoles: 2,
-    teamSize: 3,
-    stage: "development",
-    createdAt: "2023-05-12T10:00:00Z",
-  },
-  {
-    id: "2",
-    title: "CryptoAnalyzer",
-    description: "An advanced analytics platform for cryptocurrency traders with real-time data visualization and AI-powered predictions.",
-    category: "Web App",
-    openRoles: 1,
-    teamSize: 4,
-    stage: "idea",
-    createdAt: "2024-04-25T14:30:00Z",
-  },
-] as ProjectCardProps[];
-
-const appliedProjects = [
-  {
-    id: "3",
-    title: "HealthHub",
-    description: "A comprehensive health tracking platform that integrates with wearable devices and provides personalized insights.",
-    category: "Health Tech",
-    openRoles: 3,
-    teamSize: 2,
-    stage: "development",
-    createdAt: "2024-05-05T09:15:00Z",
-  },
-  {
-    id: "4",
-    title: "RemoteTeam",
-    description: "All-in-one tool for remote teams to collaborate, manage tasks, and maintain team culture.",
-    category: "SaaS",
-    openRoles: 2,
-    teamSize: 5,
-    stage: "launched",
-    createdAt: "2024-03-18T11:45:00Z",
-  },
-] as ProjectCardProps[];
-
-const recentActivity = [
-  { type: "application", project: "DesignAI", role: "UI/UX Designer", date: "2024-05-10T14:30:00Z" },
-  { type: "message", from: "Alex Chen", project: "EcoTrack", date: "2024-05-09T09:15:00Z" },
-  { type: "role_added", project: "EcoTrack", role: "Backend Developer", date: "2024-05-07T16:45:00Z" },
-  { type: "project_update", project: "CryptoAnalyzer", update: "Moved to development stage", date: "2024-05-05T10:30:00Z" },
-];
+import ProjectCard from "@/components/ProjectCard";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [myProjects, setMyProjects] = useState([]);
+  const [appliedProjects, setAppliedProjects] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    if (!user) return;
+    
+    async function fetchData() {
+      try {
+        setIsLoading(true);
+        
+        // Fetch user's projects
+        const { data: projects, error: projectsError } = await supabase
+          .from("projects")
+          .select(`
+            *,
+            roles(count)
+          `)
+          .eq("creator_id", user.id)
+          .order("created_at", { ascending: false });
+          
+        if (projectsError) throw projectsError;
+        
+        // Fetch projects user has applied to
+        const { data: applications, error: applicationsError } = await supabase
+          .from("applications")
+          .select(`
+            *,
+            roles(
+              *,
+              projects(*)
+            )
+          `)
+          .eq("applicant_id", user.id)
+          .order("created_at", { ascending: false });
+          
+        if (applicationsError) throw applicationsError;
+        
+        // Process application data to extract projects
+        const appliedProjectsData = applications?.map(app => ({
+          id: app.roles.projects.id,
+          title: app.roles.projects.title,
+          description: app.roles.projects.description,
+          category: app.roles.projects.category,
+          openRoles: 0, // We'll need another query for this if needed
+          teamSize: app.roles.projects.team_size,
+          stage: app.roles.projects.stage,
+          createdAt: app.roles.projects.created_at,
+        })) || [];
+        
+        // Format projects data
+        const formattedProjects = projects?.map(project => ({
+          id: project.id,
+          title: project.title,
+          description: project.description,
+          category: project.category,
+          openRoles: project.roles[0].count,
+          teamSize: project.team_size,
+          stage: project.stage,
+          createdAt: project.created_at,
+        })) || [];
+
+        setMyProjects(formattedProjects);
+        setAppliedProjects(appliedProjectsData);
+        
+        // TODO: Fetch recent activity (simplified for now)
+        setRecentActivity([
+          { type: "application", project: "Recent Project", role: "Developer", date: new Date().toISOString() },
+        ]);
+      } catch (error: any) {
+        toast({
+          title: "Error loading dashboard",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchData();
+  }, [user, toast]);
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -75,6 +109,18 @@ export default function Dashboard() {
       minute: 'numeric'
     }).format(date);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow bg-gray-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -140,7 +186,7 @@ export default function Dashboard() {
                       <div>
                         <p className="text-sm font-medium text-gray-500">Open Roles</p>
                         <h3 className="text-3xl font-bold mt-1">
-                          {myProjects.reduce((sum, project) => sum + project.openRoles, 0)}
+                          {myProjects.reduce((sum: number, project: any) => sum + (project.openRoles || 0), 0)}
                         </h3>
                       </div>
                       <div className="p-2 bg-green-100 rounded-full">
@@ -156,43 +202,31 @@ export default function Dashboard() {
                   <h2 className="text-xl font-semibold">Recent Activity</h2>
                 </div>
                 <Card>
-                  {recentActivity.map((activity, index) => (
-                    <div 
-                      key={index} 
-                      className={`p-4 flex items-center justify-between ${
-                        index !== recentActivity.length - 1 ? "border-b" : ""
-                      }`}
-                    >
-                      <div>
-                        {activity.type === "application" && (
-                          <p>
-                            You applied for <span className="font-medium">{activity.role}</span> at{" "}
-                            <Link to="#" className="text-blue-600 hover:underline">{activity.project}</Link>
-                          </p>
-                        )}
-                        {activity.type === "message" && (
-                          <p>
-                            <span className="font-medium">{activity.from}</span> sent you a message about{" "}
-                            <Link to="#" className="text-blue-600 hover:underline">{activity.project}</Link>
-                          </p>
-                        )}
-                        {activity.type === "role_added" && (
-                          <p>
-                            Added <span className="font-medium">{activity.role}</span> role to{" "}
-                            <Link to="#" className="text-blue-600 hover:underline">{activity.project}</Link>
-                          </p>
-                        )}
-                        {activity.type === "project_update" && (
-                          <p>
-                            <Link to="#" className="text-blue-600 hover:underline">{activity.project}</Link>{" "}
-                            {activity.update}
-                          </p>
-                        )}
-                        <p className="text-sm text-gray-500 mt-1">{formatDate(activity.date)}</p>
+                  {recentActivity.length > 0 ? (
+                    recentActivity.map((activity, index) => (
+                      <div 
+                        key={index} 
+                        className={`p-4 flex items-center justify-between ${
+                          index !== recentActivity.length - 1 ? "border-b" : ""
+                        }`}
+                      >
+                        <div>
+                          {activity.type === "application" && (
+                            <p>
+                              You applied for <span className="font-medium">{activity.role}</span> at{" "}
+                              <Link to="#" className="text-blue-600 hover:underline">{activity.project}</Link>
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-500 mt-1">{formatDate(activity.date)}</p>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-gray-400" />
                       </div>
-                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                    ))
+                  ) : (
+                    <div className="p-6 text-center text-gray-500">
+                      No recent activity
                     </div>
-                  ))}
+                  )}
                 </Card>
               </div>
               
@@ -205,11 +239,26 @@ export default function Dashboard() {
                     </Link>
                   </Button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {myProjects.map((project) => (
-                    <ProjectCard key={project.id} project={project} />
-                  ))}
-                </div>
+                {myProjects.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {myProjects.slice(0, 2).map((project) => (
+                      <ProjectCard key={project.id} project={project} />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="p-6">
+                    <div className="text-center py-6">
+                      <h3 className="text-lg font-medium mb-2">No projects yet</h3>
+                      <p className="text-gray-500 mb-4">Create your first startup project</p>
+                      <Button asChild>
+                        <Link to="/projects/new">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          New Project
+                        </Link>
+                      </Button>
+                    </div>
+                  </Card>
+                )}
               </div>
             </TabsContent>
             

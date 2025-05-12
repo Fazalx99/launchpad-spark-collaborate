@@ -9,7 +9,236 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          experience: string
+          id: string
+          motivation: string
+          portfolio: string | null
+          role_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          experience: string
+          id?: string
+          motivation: string
+          portfolio?: string | null
+          role_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          experience?: string
+          id?: string
+          motivation?: string
+          portfolio?: string | null
+          role_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          full_name: string | null
+          github_url: string | null
+          id: string
+          linkedin_url: string | null
+          skills: string[] | null
+          updated_at: string
+          username: string | null
+          website_url: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          full_name?: string | null
+          github_url?: string | null
+          id: string
+          linkedin_url?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          username?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          full_name?: string | null
+          github_url?: string | null
+          id?: string
+          linkedin_url?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          username?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      project_members: {
+        Row: {
+          id: string
+          joined_at: string
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          project_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          category: string
+          created_at: string
+          creator_id: string
+          description: string
+          id: string
+          stage: string
+          team_size: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          creator_id: string
+          description: string
+          id?: string
+          stage: string
+          team_size?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          creator_id?: string
+          description?: string
+          id?: string
+          stage?: string
+          team_size?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          commitment: string
+          created_at: string
+          creator_id: string
+          description: string
+          id: string
+          project_id: string
+          remote: boolean
+          skills: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          commitment: string
+          created_at?: string
+          creator_id: string
+          description: string
+          id?: string
+          project_id: string
+          remote?: boolean
+          skills: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          commitment?: string
+          created_at?: string
+          creator_id?: string
+          description?: string
+          id?: string
+          project_id?: string
+          remote?: boolean
+          skills?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
