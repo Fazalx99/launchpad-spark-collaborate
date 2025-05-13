@@ -31,18 +31,6 @@ export default function useDashboardData() {
           
         if (projectsError) throw projectsError;
         
-        // Fetch ALL projects for the "Explore" tab 
-        const { data: allProjects, error: allProjectsError } = await supabase
-          .from("projects")
-          .select(`
-            *,
-            roles(count)
-          `)
-          .order("created_at", { ascending: false });
-          
-        if (allProjectsError) throw allProjectsError;
-        console.log("All projects:", allProjects); // Debug log
-        
         // Fetch projects user has applied to
         const { data: applications, error: applicationsError } = await supabase
           .from("applications")
@@ -89,7 +77,7 @@ export default function useDashboardData() {
         setRecentActivity([
           { type: "application", project: "Recent Project", role: "Developer", date: new Date().toISOString() },
         ]);
-      } catch (error: any) {
+      } catch (error) {
         toast({
           title: "Error loading dashboard",
           description: error.message,

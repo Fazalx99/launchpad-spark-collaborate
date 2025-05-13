@@ -1,9 +1,10 @@
 
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import useDashboardData from "@/hooks/useDashboardData";
 import { formatDate } from "@/utils/formatters";
 import LoadingSpinner from "@/components/dashboard/LoadingSpinner";
@@ -14,6 +15,15 @@ import ProjectsList from "@/components/dashboard/ProjectsList";
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const { myProjects, appliedProjects, recentActivity, isLoading } = useDashboardData();
+  const navigate = useNavigate();
+  
+  const handleTabChange = (value: string) => {
+    if (value === "explore") {
+      navigate("/explore");
+    } else {
+      setActiveTab(value);
+    }
+  };
   
   if (isLoading) {
     return (
@@ -33,7 +43,7 @@ export default function Dashboard() {
         <div className="container mx-auto px-4">
           <DashboardHeader />
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="myProjects">My Projects</TabsTrigger>
@@ -70,18 +80,7 @@ export default function Dashboard() {
               />
             </TabsContent>
             
-            <TabsContent value="explore" className="space-y-6 animate-fade-in">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Explore Projects</h2>
-              </div>
-              <ProjectsList 
-                projects={myProjects} 
-                emptyTitle="No projects found"
-                emptyDescription="Be the first to create a project!"
-                emptyActionUrl="/projects/new"
-                emptyActionLabel="New Project"
-              />
-            </TabsContent>
+            {/* We removed the Explore tab content since we now navigate to the /explore page */}
           </Tabs>
         </div>
       </div>

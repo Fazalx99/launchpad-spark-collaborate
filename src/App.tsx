@@ -12,6 +12,7 @@ import ProjectDetails from "./pages/ProjectDetails";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import CreateProject from "./pages/CreateProject";
+import Explore from "./pages/Explore";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,11 @@ const App = () => (
             <Route path="/projects/new" element={
               <ProtectedRoute>
                 <CreateProject />
+              </ProtectedRoute>
+            } />
+            <Route path="/explore" element={
+              <ProtectedRoute>
+                <Explore />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
