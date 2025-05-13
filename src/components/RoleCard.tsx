@@ -63,6 +63,8 @@ export default function RoleCard({ role }: { role: RoleCardProps }) {
         isOpen={showApplicationModal}
         onClose={() => setShowApplicationModal(false)}
         role={role}
+        projectId={role.projectId}
+        projectTitle="Project Title" // This will be replaced in ProjectDetails.tsx
       />
     </>
   );

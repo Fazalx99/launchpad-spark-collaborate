@@ -12,6 +12,8 @@ export type Database = {
       applications: {
         Row: {
           applicant_id: string
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string
           experience: string
           id: string
@@ -23,6 +25,8 @@ export type Database = {
         }
         Insert: {
           applicant_id: string
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           experience: string
           id?: string
@@ -34,6 +38,8 @@ export type Database = {
         }
         Update: {
           applicant_id?: string
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           experience?: string
           id?: string

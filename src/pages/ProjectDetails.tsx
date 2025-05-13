@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +76,16 @@ export default function ProjectDetails() {
         if (membersError) throw membersError;
         
         // Format data
+        const formattedRoles = rolesData.map((role: any) => ({
+          id: role.id,
+          projectId: role.project_id,
+          title: role.title,
+          description: role.description,
+          skills: role.skills,
+          commitment: role.commitment,
+          remote: role.remote,
+        }));
+        
         const formattedProject = {
           ...projectData,
           team: membersData.map((member: any) => ({
@@ -87,23 +98,13 @@ export default function ProjectDetails() {
                 ? `${member.profiles.full_name.charAt(0)}${member.profiles.full_name.split(' ')[1]?.charAt(0) || ''}`
                 : "UN"
           })),
-          roles: rolesData.map((role: any) => ({
-            id: role.id,
-            projectId: role.project_id,
-            title: role.title,
-            description: role.description,
-            skills: role.skills,
-            commitment: role.commitment,
-            remote: role.remote,
-          }))
+          roles: formattedRoles
         };
         
-        console.log("Project details:", formattedProject);
-        
         setProject(formattedProject);
-        setRoles(formattedProject.roles);
+        setRoles(formattedRoles);
         setTeamMembers(formattedProject.team);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching project details:", error);
         toast({
           title: "Error loading project",
@@ -350,13 +351,15 @@ export default function ProjectDetails() {
         </div>
       </div>
       
-      <ApplicationModal 
-        isOpen={isApplyModalOpen} 
-        onClose={() => setIsApplyModalOpen(false)}
-        role={selectedRole || roles[0]}
-        projectId={project.id}
-        projectTitle={project.title}
-      />
+      {selectedRole && (
+        <ApplicationModal 
+          isOpen={isApplyModalOpen} 
+          onClose={() => setIsApplyModalOpen(false)}
+          role={selectedRole}
+          projectId={project.id}
+          projectTitle={project.title}
+        />
+      )}
       
       <Footer />
     </div>
