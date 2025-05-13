@@ -12,102 +12,217 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { 
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { RoleCardProps } from "./RoleCard";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const applicationSchema = z.object({
+  experience: z.string().min(10, "Please provide more details about your experience"),
+  motivation: z.string().min(10, "Please explain why you're interested in this role"),
+  portfolio: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  email: z.string().email("Please enter a valid email address"),
+});
+
+type ApplicationFormValues = z.infer<typeof applicationSchema>;
 
 export function ApplicationModal({ 
   isOpen, 
   onClose,
-  role 
+  role,
+  projectId,
+  projectTitle
 }: { 
   isOpen: boolean; 
   onClose: () => void;
   role: RoleCardProps;
+  projectId: string;
+  projectTitle: string;
 }) {
-  const [experience, setExperience] = useState("");
-  const [motivation, setMotivation] = useState("");
-  const [portfolio, setPortfolio] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<ApplicationFormValues>({
+    resolver: zodResolver(applicationSchema),
+    defaultValues: {
+      experience: "",
+      motivation: "",
+      portfolio: "",
+      phoneNumber: "",
+      email: "",
+    },
+  });
+
+  const handleSubmit = async (values: ApplicationFormValues) => {
+    if (!role) return;
+    
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) throw userError;
+      if (!user) throw new Error("You must be logged in to apply");
+      
+      // Submit application
+      const { data, error } = await supabase
+        .from("applications")
+        .insert({
+          role_id: role.id,
+          applicant_id: user.id,
+          experience: values.experience,
+          motivation: values.motivation,
+          portfolio: values.portfolio || null,
+          contact_phone: values.phoneNumber || null,
+          contact_email: values.email,
+        });
+        
+      if (error) throw error;
+      
       toast({
         title: "Application submitted!",
-        description: `Your application for ${role.title} has been successfully submitted.`,
+        description: `Your application for ${role.title} on ${projectTitle} has been successfully submitted.`,
       });
-      setIsSubmitting(false);
+      
+      form.reset();
       onClose();
-      resetForm();
-    }, 1000);
-  };
-
-  const resetForm = () => {
-    setExperience("");
-    setMotivation("");
-    setPortfolio("");
+    } catch (error: any) {
+      console.error("Error submitting application:", error);
+      toast({
+        title: "Application failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[550px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Apply for {role.title}</DialogTitle>
-            <DialogDescription>
-              Share your experience and why you're a great fit for this role.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="experience">Relevant Experience</Label>
-              <Textarea
-                id="experience"
-                placeholder="Describe your relevant experience..."
-                value={experience}
-                onChange={(e) => setExperience(e.target.value)}
-                className="min-h-[100px]"
-                required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <DialogHeader>
+              <DialogTitle>Apply for {role?.title}</DialogTitle>
+              <DialogDescription>
+                Share your experience and why you're a great fit for this role.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="experience"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Relevant Experience</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describe your relevant experience..."
+                        className="min-h-[100px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="motivation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Why are you interested?</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Why are you interested in this role and project?"
+                        className="min-h-[100px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="portfolio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Portfolio/LinkedIn/GitHub (Optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number (Optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Your phone number..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Your email address..."
+                        type="email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
             
-            <div className="grid gap-2">
-              <Label htmlFor="motivation">Why are you interested?</Label>
-              <Textarea
-                id="motivation"
-                placeholder="Why are you interested in this role and project?"
-                value={motivation}
-                onChange={(e) => setMotivation(e.target.value)}
-                className="min-h-[100px]"
-                required
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="portfolio">Portfolio/LinkedIn/GitHub (Optional)</Label>
-              <Input
-                id="portfolio"
-                placeholder="https://..."
-                value={portfolio}
-                onChange={(e) => setPortfolio(e.target.value)}
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose} type="button">
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit Application"}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter>
+              <Button variant="outline" onClick={onClose} type="button">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Submit Application"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
