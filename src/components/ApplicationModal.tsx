@@ -9,13 +9,11 @@ import {
   DialogTitle 
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { 
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -213,11 +211,15 @@ export function ApplicationModal({
               />
             </div>
             
-            <DialogFooter>
+            <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
               <Button variant="outline" onClick={onClose} type="button">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full sm:w-auto"
+              >
                 {isSubmitting ? "Submitting..." : "Submit Application"}
               </Button>
             </DialogFooter>

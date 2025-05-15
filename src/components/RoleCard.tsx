@@ -15,7 +15,7 @@ export interface RoleCardProps {
   remote: boolean;
 }
 
-export default function RoleCard({ role }: { role: RoleCardProps }) {
+export default function RoleCard({ role, projectTitle }: { role: RoleCardProps; projectTitle?: string }) {
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   
   const commitmentBadges = {
@@ -59,13 +59,15 @@ export default function RoleCard({ role }: { role: RoleCardProps }) {
         </CardFooter>
       </Card>
       
-      <ApplicationModal
-        isOpen={showApplicationModal}
-        onClose={() => setShowApplicationModal(false)}
-        role={role}
-        projectId={role.projectId}
-        projectTitle="Project Title" // This will be replaced in ProjectDetails.tsx
-      />
+      {showApplicationModal && (
+        <ApplicationModal
+          isOpen={showApplicationModal}
+          onClose={() => setShowApplicationModal(false)}
+          role={role}
+          projectId={role.projectId}
+          projectTitle={projectTitle || "Project"}
+        />
+      )}
     </>
   );
 }
