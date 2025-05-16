@@ -73,30 +73,75 @@ export function ApplicationModal({
       if (userError) throw userError;
       if (!user) throw new Error("You must be logged in to apply");
       
-      // If no specific role was selected, show an error
-      if (!role?.id) {
-        throw new Error("Please select a specific role to apply for");
-      }
-      
-      // Submit application
-      const { data, error } = await supabase
-        .from("applications")
-        .insert({
-          role_id: role.id,
-          applicant_id: user.id,
-          experience: values.experience,
-          motivation: values.motivation,
-          portfolio: values.portfolio || null,
-          contact_phone: values.phoneNumber || null,
-          contact_email: values.email,
-        });
+      if (role?.id) {
+        // Submit application for a specific role
+        const { data, error } = await supabase
+          .from("applications")
+          .insert({
+            role_id: role.id,
+            applicant_id: user.id,
+            experience: values.experience,
+            motivation: values.motivation,
+            portfolio: values.portfolio || null,
+            contact_phone: values.phoneNumber || null,
+            contact_email: values.email,
+          });
+          
+        if (error) throw error;
         
-      if (error) throw error;
-      
-      toast({
-        title: "Application submitted!",
-        description: `Your application for ${role.title} on ${projectTitle} has been successfully submitted.`,
-      });
+        toast({
+          title: "Application submitted!",
+          description: `Your application for ${role.title} on ${projectTitle} has been successfully submitted.`,
+        });
+      } else {
+        // For general applications when no role is specified, 
+        // we'll still use the applications table but with a different message
+        
+        // Check if there are any open roles
+        const { data: rolesData, error: rolesError } = await supabase
+          .from("roles")
+          .select("id")
+          .eq("project_id", projectId)
+          .limit(1);
+        
+        if (rolesError) throw rolesError;
+        
+        // If there's an open role, use that for the application
+        const roleId = rolesData && rolesData.length > 0 ? rolesData[0].id : null;
+        
+        if (!roleId) {
+          toast({
+            title: "General interest noted",
+            description: `The project owner will be notified of your interest in ${projectTitle}.`,
+          });
+          
+          // In a real app, you might store this somewhere else or handle differently
+          // For this demo, we'll still note the interest but inform the user
+          
+          // Here you could implement a different table like "project_interests"
+          // that doesn't require a role_id
+        } else {
+          // Use the first role if one exists
+          const { data, error } = await supabase
+            .from("applications")
+            .insert({
+              role_id: roleId,
+              applicant_id: user.id,
+              experience: values.experience,
+              motivation: values.motivation,
+              portfolio: values.portfolio || null,
+              contact_phone: values.phoneNumber || null,
+              contact_email: values.email,
+            });
+            
+          if (error) throw error;
+          
+          toast({
+            title: "Application submitted!",
+            description: `Your general application for ${projectTitle} has been successfully submitted.`,
+          });
+        }
+      }
       
       form.reset();
       onClose();

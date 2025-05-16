@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import ProjectRolesSection from "./project/ProjectRolesSection";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -22,11 +23,20 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+export interface ProjectRoleFormData {
+  title: string;
+  description: string;
+  skills: string[];
+  commitment: "full-time" | "part-time" | "flexible";
+  remote: boolean;
+}
+
 export default function CreateProjectForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [projectRoles, setProjectRoles] = useState<ProjectRoleFormData[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -37,6 +47,16 @@ export default function CreateProjectForm() {
       stage: "idea",
     },
   });
+
+  const handleAddRole = (role: ProjectRoleFormData) => {
+    setProjectRoles([...projectRoles, role]);
+  };
+
+  const handleRemoveRole = (index: number) => {
+    const updatedRoles = [...projectRoles];
+    updatedRoles.splice(index, 1);
+    setProjectRoles(updatedRoles);
+  };
 
   async function onSubmit(data: FormValues) {
     if (!user) {
@@ -51,19 +71,40 @@ export default function CreateProjectForm() {
     try {
       setIsSubmitting(true);
 
-      const { error } = await supabase.from("projects").insert({
+      // First create the project
+      const { data: projectData, error: projectError } = await supabase.from("projects").insert({
         title: data.title,
         description: data.description,
         category: data.category,
         stage: data.stage,
         creator_id: user.id,
-      });
+      }).select();
 
-      if (error) throw error;
+      if (projectError) throw projectError;
+      
+      const projectId = projectData[0].id;
+      
+      // Then create the roles if any
+      if (projectRoles.length > 0) {
+        const rolesToInsert = projectRoles.map(role => ({
+          project_id: projectId,
+          creator_id: user.id,
+          title: role.title,
+          description: role.description,
+          skills: role.skills,
+          commitment: role.commitment,
+          remote: role.remote
+        }));
+        
+        const { error: rolesError } = await supabase.from("roles").insert(rolesToInsert);
+        
+        if (rolesError) throw rolesError;
+      }
 
       toast({
         title: "Project created!",
-        description: "Your project has been successfully created.",
+        description: "Your project has been successfully created with " + 
+          (projectRoles.length > 0 ? `${projectRoles.length} role(s)` : "no roles") + ".",
       });
 
       navigate("/dashboard");
@@ -149,6 +190,20 @@ export default function CreateProjectForm() {
                 <FormMessage />
               </FormItem>
             )}
+          />
+        </div>
+
+        {/* Project Roles Section */}
+        <div className="border-t pt-6 mt-8">
+          <h3 className="text-lg font-medium mb-4">Project Roles</h3>
+          <p className="text-sm text-gray-500 mb-6">
+            Add roles you're looking to fill in your project team. You can add multiple roles.
+          </p>
+          
+          <ProjectRolesSection 
+            projectRoles={projectRoles} 
+            onAddRole={handleAddRole}
+            onRemoveRole={handleRemoveRole}
           />
         </div>
 

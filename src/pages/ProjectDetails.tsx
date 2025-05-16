@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -29,22 +30,9 @@ export default function ProjectDetails() {
   };
   
   const handleApplyToProject = () => {
-    // If there's only one role, select it automatically
-    if (roles.length === 1) {
-      setSelectedRole(roles[0]);
-      setIsApplyModalOpen(true);
-    } else if (roles.length > 1) {
-      // Otherwise, show an empty role modal
-      // The user will need to select a specific role in the modal
-      setSelectedRole(null);
-      setIsApplyModalOpen(true);
-    } else {
-      toast({
-        title: "No open roles",
-        description: "This project doesn't have any open roles at the moment.",
-        variant: "destructive",
-      });
-    }
+    // Always open the apply modal, even if there are no roles
+    setSelectedRole(roles.length === 1 ? roles[0] : null);
+    setIsApplyModalOpen(true);
   };
   
   const handleRoleApply = (role: RoleCardProps) => {
