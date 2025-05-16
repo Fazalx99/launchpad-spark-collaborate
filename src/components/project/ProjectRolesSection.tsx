@@ -24,7 +24,7 @@ import { Switch } from "@/components/ui/switch";
 const roleSchema = z.object({
   title: z.string().min(1, "Role title is required"),
   description: z.string().min(10, "Please provide a more detailed description"),
-  skills: z.string().transform((val) => val.split(',').map(s => s.trim()).filter(s => s)),
+  skills: z.string().transform((val) => val.split(',').map(s => s.trim()).filter(s => s !== "")),
   commitment: z.enum(["full-time", "part-time", "flexible"]),
   remote: z.boolean().default(true)
 });
@@ -55,7 +55,7 @@ export default function ProjectRolesSection({ projectRoles, onAddRole, onRemoveR
     onAddRole({
       title: values.title,
       description: values.description,
-      skills: values.skills,
+      skills: Array.isArray(values.skills) ? values.skills : [],
       commitment: values.commitment,
       remote: values.remote
     });
