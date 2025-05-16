@@ -45,7 +45,7 @@ export function ApplicationModal({
 }: { 
   isOpen: boolean; 
   onClose: () => void;
-  role: RoleCardProps;
+  role?: RoleCardProps;
   projectId: string;
   projectTitle: string;
 }) {
@@ -64,8 +64,6 @@ export function ApplicationModal({
   });
 
   const handleSubmit = async (values: ApplicationFormValues) => {
-    if (!role) return;
-    
     setIsSubmitting(true);
     
     try {
@@ -74,6 +72,11 @@ export function ApplicationModal({
       
       if (userError) throw userError;
       if (!user) throw new Error("You must be logged in to apply");
+      
+      // If no specific role was selected, show an error
+      if (!role?.id) {
+        throw new Error("Please select a specific role to apply for");
+      }
       
       // Submit application
       const { data, error } = await supabase
@@ -115,9 +118,9 @@ export function ApplicationModal({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             <DialogHeader>
-              <DialogTitle>Apply for {role?.title}</DialogTitle>
+              <DialogTitle>Apply for {role ? role.title : projectTitle}</DialogTitle>
               <DialogDescription>
-                Share your experience and why you're a great fit for this role.
+                Share your experience and why you're a great fit for this {role ? "role" : "project"}.
               </DialogDescription>
             </DialogHeader>
             

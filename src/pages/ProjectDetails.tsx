@@ -32,12 +32,19 @@ export default function ProjectDetails() {
     // If there's only one role, select it automatically
     if (roles.length === 1) {
       setSelectedRole(roles[0]);
-    } else {
+      setIsApplyModalOpen(true);
+    } else if (roles.length > 1) {
       // Otherwise, show an empty role modal
       // The user will need to select a specific role in the modal
       setSelectedRole(null);
+      setIsApplyModalOpen(true);
+    } else {
+      toast({
+        title: "No open roles",
+        description: "This project doesn't have any open roles at the moment.",
+        variant: "destructive",
+      });
     }
-    setIsApplyModalOpen(true);
   };
   
   const handleRoleApply = (role: RoleCardProps) => {
@@ -112,11 +119,11 @@ export default function ProjectDetails() {
         </div>
       </div>
       
-      {selectedRole && (
+      {isApplyModalOpen && (
         <ApplicationModal 
           isOpen={isApplyModalOpen} 
           onClose={() => setIsApplyModalOpen(false)}
-          role={selectedRole}
+          role={selectedRole || undefined}
           projectId={project.id}
           projectTitle={project.title}
         />
